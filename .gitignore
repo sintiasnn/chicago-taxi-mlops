@@ -5,3 +5,6 @@ __pycache__/
 output/
 .ipynb_checkpoints/
 *.sqlite
+serving_model/
+data/tfrecord/
+data/*.bak
