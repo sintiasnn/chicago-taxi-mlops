@@ -4,6 +4,7 @@
 ![TFX](https://img.shields.io/badge/TFX-1.11.0-orange?logo=tensorflow)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10-orange?logo=tensorflow)
 ![Docker](https://img.shields.io/badge/Docker-TF%20Serving-blue?logo=docker)
+[![Railway](https://img.shields.io/badge/Deployed-Railway-purple?logo=railway)](https://chicago-taxi-mlops-production.up.railway.app/v1/models/taxi-model)
 
 An end-to-end machine learning pipeline for Chicago taxi tip prediction using TensorFlow Extended (TFX). This project predicts whether a taxi passenger will tip based on trip characteristics — covering data validation, preprocessing, hyperparameter tuning, model training, evaluation, and production deployment with TensorFlow Serving, Prometheus, and Grafana.
 
@@ -95,6 +96,29 @@ chicago-taxi-mlops/
 │   └── tfrecord/                     # TFRecord for TFX ingestion
 └── output/                           # TFX pipeline run artifacts
     └── pipeline_root/
+```
+
+---
+
+## Live Deployment
+
+The model is deployed on **Railway** using TensorFlow Serving (C++):
+
+```
+https://chicago-taxi-mlops-production.up.railway.app
+```
+
+### Model Status
+```bash
+curl https://chicago-taxi-mlops-production.up.railway.app/v1/models/taxi-model
+```
+
+### Prediction Request
+```bash
+# Credit Card → Tip (prob ~0.98)
+curl -X POST https://chicago-taxi-mlops-production.up.railway.app/v1/models/taxi-model:predict \
+  -H "Content-Type: application/json" \
+  -d '{"instances":[{"examples":{"b64":"ChsKFQoIdHJpcF9taWxlcxIJCgIIA...”}}}]}'
 ```
 
 ---
