@@ -1,18 +1,217 @@
-# Chicago Taxi Tip Prediction — MLOps Pipeline
+# Chicago Taxi TFX Pipeline
 
-Nama: sintiawati
+![Python](https://img.shields.io/badge/Python-3.9-blue?logo=python)
+![TFX](https://img.shields.io/badge/TFX-1.11.0-orange?logo=tensorflow)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10-orange?logo=tensorflow)
+![Docker](https://img.shields.io/badge/Docker-TF%20Serving-blue?logo=docker)
 
-Username dicoding: sintiawati
+An end-to-end machine learning pipeline for Chicago taxi tip prediction using TensorFlow Extended (TFX). This project predicts whether a taxi passenger will tip based on trip characteristics — covering data validation, preprocessing, hyperparameter tuning, model training, evaluation, and production deployment with TensorFlow Serving, Prometheus, and Grafana.
 
-| | Deskripsi |
-| ----------- | ----------- |
-| Dataset | [Chicago Taxi Trips](https://data.cityofchicago.org/Transportation/Taxi-Trips/wrvz-psew) |
-| Masalah | Memprediksi apakah seorang penumpang taksi akan memberikan tip berdasarkan karakteristik perjalanan, seperti jarak tempuh, durasi, tarif, metode pembayaran, dan perusahaan taksi. |
-| Solusi machine learning | End-to-end MLOps pipeline menggunakan TensorFlow Extended (TFX) dengan Apache Beam orchestrator. Model dideploy menggunakan TensorFlow Serving (C++), dimonitoring dengan Prometheus + Grafana, dan hyperparameter di-tuning otomatis dengan Keras Tuner. |
-| Metode pengolahan | Fitur numerik (trip_miles, fare, trip_seconds, trip_start_timestamp) dikonversi ke float32. Fitur kategorikal (payment_type, company, trip_start_hour, trip_start_day, trip_start_month) dikonversi ke int64 via tf.Example. |
-| Arsitektur model | 4 fitur numerik + embedding untuk 5 fitur kategorikal (16 dimensi). Dense layers: 384 → 64 → 128 unit, masing-masing dengan BatchNormalization + Dropout 0.2. Output sigmoid. Hyperparameter dituning dengan Keras Tuner. |
-| Metrik evaluasi | Binary Accuracy, AUC |
-| Performa model | Model diblessing oleh TFX Evaluator dan dipush ke serving. Credit Card → prob tip ~0.98, Cash → prob tip ~0.02. |
-| Opsi deployment | Railway + TensorFlow Serving (C++) via Docker image `tensorflow/serving`. Input format: serialized tf.Example (base64). REST API di port 8501. |
-| Web app | [chicago-taxi-mlops](https://chicago-taxi-mlops-production.up.railway.app) |
-| Monitoring | Prometheus scrape TF Serving metrics (`:tensorflow:serving:request_count`, `request_latency`), divisualisasikan dengan Grafana dashboard. Traffic generator script mengirim request setiap 5 detik. |
+---
+
+## Table of Contents
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Dataset](#dataset)
+- [Getting Started](#getting-started)
+- [Pipeline Diagram](#pipeline-diagram)
+- [Experiment Results](#experiment-results)
+- [Author](#author)
+
+---
+
+## Overview
+
+This project builds a complete ML pipeline to predict whether a passenger will **tip or not** based on trip metadata (distance, fare, duration, payment method, company, etc.).
+
+**Pipeline stages:**
+1. **Data Ingestion** — TFRecord loading with `ImportExampleGen`
+2. **Data Validation** — Statistics generation, schema inference, anomaly detection
+3. **Transform** — Feature preprocessing via TensorFlow Transform (categorical encoding + vocabulary generation)
+4. **Hyperparameter Tuning** — Keras Tuner RandomSearch (10 trials, 5 epochs each)
+5. **Training** — Deep Neural Network with BatchNormalization and Dropout
+6. **Evaluation** — TFMA with blessing threshold
+7. **Deployment** — Push to TensorFlow Serving (C++ REST API)
+
+---
+
+## Tech Stack
+
+| Category | Tools |
+|---|---|
+| Language | Python 3.9 |
+| ML Pipeline | TensorFlow Extended (TFX) 1.11.0 |
+| Deep Learning | TensorFlow 2.10, Keras |
+| Hyperparameter Tuning | Keras Tuner |
+| Model Evaluation | TensorFlow Model Analysis (TFMA) |
+| Serving | TensorFlow Serving (Docker + Railway) |
+| Monitoring | Prometheus + Grafana |
+| Data Source | Chicago Taxi Trips (City of Chicago) |
+
+---
+
+## Project Structure
+
+```
+chicago-taxi-mlops/
+├── README.md
+├── requirements.txt
+├── setup.sh                          # Environment setup script
+├── Dockerfile                        # TF Serving deployment image
+├── docker-compose.yml                # Local monitoring stack
+├── run_pipeline.py                   # Entry point to run TFX pipeline
+├── rebuild_serving_model.py          # Rebuild serving model with tf.Example input
+├── chicago-taxi-pipeline.ipynb       # Main pipeline notebook
+├── chicago-taxi-testing.ipynb        # Prediction testing notebook
+├── taxi_pipeline/                    # TFX pipeline Python package
+│   ├── __init__.py
+│   ├── configs.py                    # Pipeline configuration
+│   ├── components.py                 # Component factory functions
+│   └── pipeline_def.py               # Pipeline definition
+├── modules/                          # TFX user module files
+│   ├── transform.py                  # TFT preprocessing
+│   ├── trainer.py                    # Model definition + training
+│   ├── tuner.py                      # Hyperparameter search
+│   └── model.py                      # Shared model architecture
+├── config/
+│   └── prometheus.config             # TF Serving monitoring config
+├── monitoring/
+│   ├── prometheus.yml                # Prometheus scrape config
+│   ├── traffic_generator.py          # Load generator script
+│   ├── Dockerfile                    # Prometheus container
+│   └── grafana/
+│       ├── dashboards/
+│       │   └── ml-monitoring.json    # Grafana dashboard
+│       └── provisioning/
+├── serving_model/                    # Pushed SavedModel for serving
+│   └── 1/
+│       ├── saved_model.pb
+│       ├── fingerprint.pb
+│       ├── assets/
+│       └── variables/
+├── data/
+│   ├── data.csv                      # Raw dataset
+│   └── tfrecord/                     # TFRecord for TFX ingestion
+└── output/                           # TFX pipeline run artifacts
+    └── pipeline_root/
+```
+
+---
+
+## Dataset
+
+- **Source**: [Chicago Taxi Trips](https://data.cityofchicago.org/Transportation/Taxi-Trips/wrvz-psew)
+- **Size**: ~50,000 rows
+- **Task**: Binary Classification (Tip or No Tip)
+- **Features**: 4 numerical + 5 categorical:
+  - Numerical: `trip_miles`, `fare`, `trip_seconds`, `trip_start_timestamp`
+  - Categorical: `payment_type`, `company`, `trip_start_hour`, `trip_start_day`, `trip_start_month`
+- **Label**: `tips` → binary (1 if tip > 0, 0 otherwise)
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Linux / WSL2 (recommended)
+- Docker (for TF Serving + monitoring)
+- Miniconda (for Python environment)
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/sintiasnn/chicago-taxi-mlops.git
+cd chicago-taxi-mlops
+```
+
+### 2. Setup Environment
+
+```bash
+conda create -n chicago-taxi-mlops python=3.9 -y
+conda activate chicago-taxi-mlops
+pip install -r requirements.txt
+```
+
+### 3. Run Pipeline
+```bash
+python run_pipeline.py
+```
+
+Or open `chicago-taxi-pipeline.ipynb` in Jupyter for a step-by-step walkthrough.
+
+### 4. Serve Model with TensorFlow Serving
+```bash
+docker run -p 8501:8501 \
+  --mount type=bind,source=$(pwd)/serving_model,target=/models/taxi-model \
+  -e MODEL_NAME=taxi-model \
+  -t tensorflow/serving
+```
+
+### 5. Test Predictions
+Open and run `chicago-taxi-testing.ipynb` to send tf.Example prediction requests.
+
+### 6. Monitoring
+```bash
+# Start Prometheus + Grafana
+docker compose -f monitoring/docker-compose.yml up -d
+
+# Run traffic generator
+python monitoring/traffic_generator.py
+```
+
+---
+
+## Pipeline Diagram
+
+```mermaid
+flowchart TD
+    A[TFRecord\nChicago Taxi Data] --> B[ImportExampleGen\nTrain/Eval Split 80/20]
+    B --> C[StatisticsGen]
+    C --> D[SchemaGen]
+    D --> E[ExampleValidator]
+    B --> F[Transform\nTFT Preprocessing]
+    D --> F
+    F --> G[Tuner\nKeras RandomSearch 10 trials]
+    G --> H[Trainer\nDNN with Best HP]
+    F --> H
+    H --> I[Resolver\nLatest Blessed Model]
+    I --> J[Evaluator\nTFMA + Blessing]
+    H --> J
+    J -->|Blessed| K[Pusher\nTF Serving]
+    J -->|Not Blessed| L[Stop]
+```
+
+---
+
+## Experiment Results
+
+| Metric | Value |
+|---|---|
+| Binary Accuracy | **~0.86** |
+| AUC-ROC | **~0.92** |
+
+**Best Hyperparameters (Tuner):**
+- `units_1`: 384
+- `units_2`: 64
+- `units_3`: 128
+- `dropout_rate`: 0.2
+- `learning_rate`: 0.001
+
+**Prediction Samples:**
+| Payment | Tip Probability | Prediction |
+|---|---|---|
+| Credit Card | 0.9845 | Tip |
+| Cash | 0.0175 | No Tip |
+
+---
+
+## Author
+
+**Ni Putu Sintia Wati**
+- GitHub: [@sintiasnn](https://github.com/sintiasnn)
+
+---
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
