@@ -75,27 +75,23 @@ chicago-taxi-mlops/
 │   ├── trainer.py                    # Model definition + training
 │   ├── tuner.py                      # Hyperparameter search
 │   └── model.py                      # Shared model architecture
-├── config/
-│   └── prometheus.config             # TF Serving monitoring config
-├── monitoring/
+├── monitoring/                       # Observability stack
 │   ├── prometheus.yml                # Prometheus scrape config
 │   ├── traffic_generator.py          # Load generator script
 │   ├── Dockerfile                    # Prometheus container
-│   └── grafana/
-│       ├── dashboards/
-│       │   └── ml-monitoring.json    # Grafana dashboard
-│       └── provisioning/
-├── serving_model/                    # Pushed SavedModel for serving
-│   └── 1/
-│       ├── saved_model.pb
-│       ├── fingerprint.pb
-│       ├── assets/
-│       └── variables/
+│   └── grafana/                      # Dashboard provisioning
+├── config/
+│   └── prometheus.config             # TF Serving monitoring config
 ├── data/
-│   ├── data.csv                      # Raw dataset
-│   └── tfrecord/                     # TFRecord for TFX ingestion
-└── output/                           # TFX pipeline run artifacts
-    └── pipeline_root/
+│   └── data.csv                      # Raw dataset
+├── Dockerfile                        # TF Serving deployment image
+├── rebuild_serving_model.py          # Regenerate serving model
+├── run_pipeline.py                   # Pipeline entry point
+├── setup.sh                          # Environment setup
+├── requirements.txt
+├── docker-compose.yml                # Local monitoring stack
+├── chicago-taxi-pipeline.ipynb       # Pipeline walkthrough notebook
+└── chicago-taxi-testing.ipynb        # Prediction testing notebook
 ```
 
 ---
