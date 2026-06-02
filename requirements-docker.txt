@@ -1,0 +1,9 @@
+tfx==1.11.0
+tensorflow
+scikit-learn
+pandas
+numpy
+protobuf
+requests
+joblib
+keras-tuner

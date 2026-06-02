@@ -1,0 +1,10 @@
+tfx>=1.14,<2
+dill
+tensorflow
+scikit-learn
+pandas
+numpy
+protobuf
+requests
+joblib
+keras-tuner

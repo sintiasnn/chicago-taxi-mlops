@@ -1,0 +1,9 @@
+[MASTER]
+ignore=__pycache__,.git
+
+[MESSAGES CONTROL]
+disable=E1101,E1102,C0114,C0116,R0801,R0914,C0206,C0415
+
+[REPORTS]
+output-format=colorized
+score=yes

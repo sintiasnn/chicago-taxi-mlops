@@ -1,0 +1,19 @@
+FROM python:3.9-slim
+
+WORKDIR /pipeline
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements-docker.txt .
+RUN pip install --no-cache-dir -r requirements-docker.txt
+
+COPY modules/ modules/
+COPY taxi_pipeline/ taxi_pipeline/
+COPY data/ data/
+COPY run_pipeline.py .
+
+RUN mkdir -p output serving_model
+
+CMD ["python", "run_pipeline.py"]

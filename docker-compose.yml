@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.pipeline
+    volumes:
+      - ./output:/pipeline/output
+      - ./serving_model:/pipeline/serving_model
+      - ./data:/pipeline/data
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  serving:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8501"
+    volumes:
+      - ./serving_model:/app/serving_model
+    depends_on:
+      - pipeline
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  prometheus:
+    build:
+      context: ./monitoring
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    depends_on:
+      - serving
+
+volumes:
+  prometheus_data:
