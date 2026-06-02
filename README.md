@@ -184,7 +184,7 @@ docker push ghcr.io/sintiasnn/chicago-taxi-mlops:v1
 
 1. Buka [Railway Dashboard](https://railway.app/dashboard) → **New Project** → **Deploy from Image**
 2. Masukkan image: `ghcr.io/sintiasnn/chicago-taxi-mlops:v1`
-3. Di **Settings** → set **Port** = `8501`
+3. Di **Settings** → set **Port** = `8080`
 4. Railway otomatis memberikan domain: `chicago-taxi-mlops-production.up.railway.app`
 
 **Verifikasi deployment:**

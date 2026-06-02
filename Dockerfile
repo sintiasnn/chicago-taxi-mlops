@@ -5,7 +5,7 @@ COPY ./config /model_config
 
 ENV MODEL_NAME=taxi-model
 ENV MONITORING_CONFIG="/model_config/prometheus.config"
-ENV PORT=8501
+ENV PORT=8080
 
 RUN echo '#!/bin/bash\nset -e\nenv\ntensorflow_model_server \
 --port=8500 \
