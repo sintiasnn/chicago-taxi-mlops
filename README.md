@@ -170,7 +170,29 @@ docker run -p 8501:8501 \
 ### 5. Test Predictions
 Open and run `chicago-taxi-testing.ipynb` to send tf.Example prediction requests.
 
-### 6. Monitoring
+### 6. Build & Push to Registry
+
+```bash
+# Build image
+docker build -t ghcr.io/sintiasnn/chicago-taxi-mlops:v1 .
+
+# Push to GitHub Container Registry
+docker push ghcr.io/sintiasnn/chicago-taxi-mlops:v1
+```
+
+### 7. Deploy to Railway
+
+1. Buka [Railway Dashboard](https://railway.app/dashboard) → **New Project** → **Deploy from Image**
+2. Masukkan image: `ghcr.io/sintiasnn/chicago-taxi-mlops:v1`
+3. Di **Settings** → set **Port** = `8501`
+4. Railway otomatis memberikan domain: `chicago-taxi-mlops-production.up.railway.app`
+
+**Verifikasi deployment:**
+```bash
+curl https://chicago-taxi-mlops-production.up.railway.app/v1/models/taxi-model
+```
+
+### 8. Monitoring
 ```bash
 # Start Prometheus + Grafana
 docker compose -f monitoring/docker-compose.yml up -d
